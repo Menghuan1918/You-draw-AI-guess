@@ -1,12 +1,15 @@
 import torch
 from PIL import Image
 import open_clip
-from gradio import Interface, inputs, outputs
+import gradio as gr
 
 def start():
-    model, _, preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
-    tokenizer = open_clip.get_tokenizer('ViT-B-32')
+    model, _, preprocess = open_clip.create_model_and_transforms(
+        "ViT-B-32", pretrained="laion2b_s34b_b79k"
+    )
+    tokenizer = open_clip.get_tokenizer("ViT-B-32")
     return model, preprocess, tokenizer
+
 
 def process(model, preprocess, tokenizer, image_path, text):
     if isinstance(image_path, str):
@@ -24,19 +27,27 @@ def process(model, preprocess, tokenizer, image_path, text):
         similarity = (image_features @ text_features.T) * 100
     return similarity
 
+
 def predict(image, text):
-    model, preprocess, tokenizer = start()
     similarity = process(model, preprocess, tokenizer, image, text)
     return similarity.item()
 
-inputs = [
-    inputs.Image(type="pil", label="Image"),
-    inputs.Textbox(label="Text")
-]
+gradio_app = gr.Interface(
+    predict,
+    inputs=[
+        gr.Image(label="Select the picture", type="pil"),
+        gr.Textbox(label="Enter the text"),
+    ],
+    outputs=gr.Textbox(label="Similarity"),
+    title="You draw&AI guess",
+)
 
-outputs = outputs.Textbox(label="Similarity")
+if __name__ == "__main__":
+    model, preprocess, tokenizer = start()
+    # If you want to run it locally, you can use the following code :(
+    gradio_app.launch()
+    # If you want to share it online, you can use the following code :)
+    # gradio_app.launch(share=True)
 
-# If you want to run it locally, you can use the following code :(
-Interface(fn=predict, inputs=inputs, outputs=outputs).launch()
-# If you want to share it online, you can use the following code :)
-# Interface(fn=predict, inputs=inputs, outputs=outputs).launch(share=True)
+
+
